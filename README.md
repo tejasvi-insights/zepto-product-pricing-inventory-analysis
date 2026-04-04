@@ -131,7 +131,7 @@ Built **4 reusable SQL views** as a persistent analytics layer:
 |------|---------|
 | **Pricing Anomalies** | ~50% mismatch rate traced to discount rounding — needs business rule clarification, not a data fix |
 | **Category Mapping** | Product duplication across categories overstates segment revenue without canonical mapping |
-| **Inventory Risk** | ₹48,374+ potential revenue loss across 9 categories due to stockouts |
+| **Inventory Risk** | ₹39018.50 potential revenue loss across 9 categories due to stockouts |
 | **Discount Leakage** | ₹79,107 discount cost in Chocolates & Candies — highest gap between actual vs potential revenue |
 | **Highest Risk Segments** | Chocolates & Candies and Cooking Essentials show highest combined stockout loss and discount leakage |
 
