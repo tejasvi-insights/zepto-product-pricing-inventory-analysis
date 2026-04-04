@@ -1,31 +1,40 @@
-# 📊 Zepto Product, Pricing & Inventory Analysis (SQL + Python)
+# 🛒 Zepto Product, Pricing & Inventory Analysis (SQL + Python)
+
+**Data Quality Investigation | Anomaly Detection | Revenue Analysis**
+
+---
 
 ## Overview
-This project analyzes **Zepto product data** using **SQL and Python** to identify
-pricing inconsistencies, revenue opportunities, and inventory risks.
-The analysis reflects a real-world **data analyst workflow**, with SQL used for
-data validation and business logic, and Python used for visualization.
+
+Built an end-to-end product catalog analysis on **3,731 SKUs** from Zepto's e-commerce
+platform to surface pricing anomalies, revenue leakage, and inventory risks using
+PostgreSQL and Python.
+
+This project reflects a real-world **data analyst workflow**: SQL for validation,
+anomaly detection, and business logic; Python for visualization and insight communication.
 
 ---
 
 ## 1. Business Objective
-Analyze Zepto product data to identify:
-1. Pricing inconsistencies  
-2. Revenue optimization opportunities  
-3. Inventory risks  
-4. Discount-driven customer behavior  
+
+Investigate Zepto's product catalog data to answer:
+1. Are there pricing inconsistencies or data integrity issues affecting revenue reporting?
+2. Where are the revenue optimization opportunities?
+3. Which inventory gaps represent measurable revenue risk?
+4. What purchasing behavior patterns can be detected from discount and pricing data?
 
 ---
 
 ## 2. Dataset Overview
 
-- **Source:** Kaggle (originally scraped from Zepto’s public product listings)
+- **Source:** Kaggle (originally scraped from Zepto's public product listings)
 - **Type:** E-commerce product catalog snapshot
+- **Scale:** 3,731 SKUs across multiple categories
 - **Granularity:** One row per SKU (Stock Keeping Unit)
 
-Each record represents a unique SKU. Duplicate product names exist because the same product
-can appear with different package sizes, weights, discounts, or category placements—a
-pattern commonly observed in real-world e-commerce catalogs.
+Each record represents a unique SKU. Duplicate product names exist because the same
+product can appear with different package sizes, weights, discounts, or category
+placements — a pattern commonly observed in real-world e-commerce catalogs.
 
 ### Columns
 - `sku_id` – Unique identifier for each product entry (synthetic primary key)
@@ -42,110 +51,132 @@ pattern commonly observed in real-world e-commerce catalogs.
 ---
 
 ## 3. Data Exploration & Quality Checks
-- Total record count and sample data preview  
-- Column-wise NULL analysis  
-- Detection of duplicate product names across SKUs  
+
+- Total record count and sample data preview
+- Column-wise NULL analysis
+- Detection of duplicate product names across SKUs
 - Invalid pricing checks:
-  - Discounted price > MRP  
-  - MRP ≤ 0  
-- Zero or missing weights flagged by category  
-- Stock distribution analysis  
+  - Discounted price > MRP
+  - MRP ≤ 0
+- Zero or missing weights flagged by category
+- Stock distribution analysis
 
 ---
 
 ## 4. Data Cleaning & Standardization
-- Removal of invalid pricing records (MRP ≤ 0 or selling price ≤ 0)  
-- Conversion of prices stored in **paise → rupees**  
-- Validation of corrected pricing fields  
+
+- Removal of invalid pricing records (MRP ≤ 0 or selling price ≤ 0)
+- Conversion of prices stored in **paise → rupees**
+- Validation of corrected pricing fields
 
 ---
 
-## 5. Pricing Consistency & Discount Validation
-- Derived discount percentage vs stored `discountPercent`  
-- Selling price recalculated from discount vs stored selling price  
+## 5. Pricing Consistency & Anomaly Detection
 
-**Observation:**
-- Discount percentage is consistent when derived from prices  
-- Deviations occur when recalculating selling price  
-- `mrp` and `discountedSellingPrice` are treated as **source-of-truth fields**,  
-  while `discountPercent` is rounded and informational  
+- Derived discount percentage vs stored `discountPercent`
+- Selling price recalculated from discount vs stored selling price
+- **1,877 of 3,731 SKUs (~50%) flagged as pricing mismatches under strict validation**
 
----
+**Root Cause Finding:**
+Traced the high mismatch rate to **rounding in stored discount percentages** — not
+actual data corruption. This distinction matters: a blanket fix would introduce errors,
+while a business rule clarification is the correct resolution.
 
-## 6. Ad-Hoc Analytical Queries
-- **Q1:** Top 10 best-value products by discount percentage  
-- **Q2:** High-MRP products currently out of stock  
-- **Q3:** Estimated revenue per category  
-- **Q4:** Premium products with low discounts  
-- **Q5:** Categories with highest average discount  
-- **Q6:** Best value products by price per gram (≥100g)  
-- **Q7:** Weight-based product segmentation (Small, Medium, Bulk packs)  
-- **Q8:** Total inventory weight per category  
+**Key Observation:**
+- `mrp` and `discountedSellingPrice` are the **source-of-truth fields**
+- `discountPercent` is rounded and informational — deviations here are expected
+- True anomalies are where selling price cannot be reconciled with MRP even within tolerance
 
 ---
 
-## 7. Analytical Views (Portfolio Outputs)
+## 6. Category Mapping & Double-Counting Detection
 
-- **View 1: `pricing_inconsistencies`**  
-  - Strict vs tolerant validation of pricing consistency  
-
-- **View 2: `product_category`**  
-  - Canonical category per product to prevent double counting  
-
-- **View 3: `revenue_opportunity`**  
-  - Actual vs potential revenue (at MRP)  
-  - Discount cost per category  
-
-- **View 4: `inventory_risk`**  
-  - Out-of-stock product counts  
-  - Estimated revenue loss due to stockouts  
+- Identified the same products mapped to **multiple categories**
+- This causes **double-counting in category-level revenue** — a silent but significant
+  reporting error
+- Resolved using **canonical product-category mapping** in SQL to ensure each product
+  is counted once in revenue aggregations
 
 ---
 
-## 8. Key Insights
-- **Pricing:** `discountPercent` is rounded; rely on `mrp` and
-  `discountedSellingPrice` for accuracy  
-- **Revenue:** Several categories show significant gaps between
-  actual and potential revenue due to discounting  
-- **Inventory:** Stockouts in high-value categories represent measurable
-  lost revenue  
-- **Segmentation:** Weight-based grouping highlights customer
-  pack-size preferences  
+## 7. Ad-Hoc Analytical Queries
+
+- **Q1:** Top 10 best-value products by discount percentage
+- **Q2:** High-MRP products currently out of stock
+- **Q3:** Estimated revenue per category
+- **Q4:** Premium products with low discounts
+- **Q5:** Categories with highest average discount
+- **Q6:** Best value products by price per gram (≥100g)
+- **Q7:** Weight-based product segmentation (Small, Medium, Bulk packs)
+- **Q8:** Total inventory weight per category
 
 ---
 
-## 9. Tech Stack
-- **Database:** PostgreSQL  
-- **Analysis:** SQL (CTEs, Views, Aggregations)  
-- **Visualization:** Python (`pandas`, `matplotlib`)  
-- **Documentation:** Jupyter Notebook + Markdown  
+## 8. Analytical Views (Portfolio Outputs)
+
+Built **4 reusable SQL views** as a persistent analytics layer:
+
+| View | Purpose |
+|------|---------|
+| `pricing_inconsistencies` | Strict vs tolerant validation of pricing consistency |
+| `product_category` | Canonical category mapping to prevent revenue double-counting |
+| `revenue_opportunity` | Actual vs potential revenue (at MRP) — discount cost per category |
+| `inventory_risk` | Out-of-stock counts and estimated revenue loss due to stockouts |
 
 ---
 
-## 10. Portfolio Value
+## 9. Key Insights
+
+| Area | Finding |
+|------|---------|
+| **Pricing Anomalies** | ~50% mismatch rate traced to discount rounding — needs business rule clarification, not a data fix |
+| **Category Mapping** | Product duplication across categories overstates segment revenue without canonical mapping |
+| **Inventory Risk** | ₹48,374+ potential revenue loss across 9 categories due to stockouts |
+| **Discount Leakage** | ₹79,107 discount cost in Chocolates & Candies — highest gap between actual vs potential revenue |
+| **Highest Risk Segments** | Chocolates & Candies and Cooking Essentials show highest combined stockout loss and discount leakage |
+
+---
+
+## 10. Tech Stack
+
+| Tool | Purpose |
+|------|---------|
+| PostgreSQL | Data validation, anomaly detection, analytical views |
+| SQL | CTEs, window functions, aggregations, data quality queries |
+| Python (Pandas) | Data cleaning, transformation |
+| Python (Matplotlib) | Visualization |
+| Jupyter Notebook | Analysis documentation |
+| Git | Version control |
+
+---
+
+## 11. Portfolio Value
+
 This project demonstrates:
-- Strong SQL data exploration, cleaning, and validation skills  
-- Business-aligned analytical thinking  
-- Use of SQL views as a reusable analytics layer  
-- Clear visualization and insight communication  
+- SQL-driven data quality investigation on a real-world e-commerce dataset
+- Root cause analysis mindset — distinguishing rounding artifacts from genuine data errors
+- Business-aligned thinking — anomalies framed in terms of revenue impact, not just technical flags
+- Reusable SQL views as a scalable analytics layer
+- Clear insight communication with quantified, actionable recommendations
 
 ---
 
-## 11. Next Steps
-- Extend analysis with **time-series sales data** for demand forecasting  
-- Build **interactive Power BI dashboard** for real-time monitoring 
-- Add additional Python notebooks for deeper exploratory analysis  
+## 12. Next Steps
+
+- Extend analysis with time-series sales data for demand forecasting
+- Build interactive Power BI dashboard for pricing and inventory monitoring
+- Add deeper Python EDA notebooks for category-level trend analysis
 
 ---
 
 ## Acknowledgement
 
-This project was inspired by a public tutorial using a Zepto e-commerce
-dataset. While the dataset source and initial idea were shared, all SQL
-analysis, validation logic, analytical views, and Python visualizations
-were independently developed and extended as part of my portfolio work.
+This project was inspired by a public tutorial using a Zepto e-commerce dataset.
+While the dataset source and initial idea were shared, all SQL analysis, validation
+logic, analytical views, and Python visualizations were independently developed
+and extended as part of my portfolio work.
 
 ---
 
-**Author:** Tejasvi Bhavsar  
-Aspiring Data Analyst | SQL - Python - Analytics
+**Author:** Tejasvi Bhavsar
+Data Analyst | SQL • Python • Power BI
