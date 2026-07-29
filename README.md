@@ -78,9 +78,8 @@ placements — a pattern commonly observed in real-world e-commerce catalogs.
 - **1,877 of 3,731 SKUs (~50%) flagged as pricing mismatches under strict validation**
 
 **Root Cause Finding:**
-Traced the high mismatch rate to **rounding in stored discount percentages** — not
-actual data corruption. This distinction matters: a blanket fix would introduce errors,
-while a business rule clarification is the correct resolution.
+Traced a high mismatch rate to **rounding in stored discount percentages** rather than data corruption. Determined that a bulk correction would introduce errors, while clarifying the business rule was the appropriate resolution.
+
 
 **Key Observation:**
 - `mrp` and `discountedSellingPrice` are the **source-of-truth fields**
